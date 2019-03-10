@@ -1,0 +1,38 @@
+{
+    "iron_ore": {
+        "time": 1,
+        "stations": ["electric_mining_drill"]
+    },
+    "copper_ore": {
+        "time": 1,
+        "stations": ["electric_mining_drill"]
+    },
+    "iron_plate": {
+        "time": 3.2,
+        "ingredients": {"iron_ore": 1},
+        "stations": ["stone_furnace", "steel_furnace"]
+    },
+    "copper_plate": {
+        "time": 3.2,
+        "ingredients": {"copper_ore": 1},
+        "stations": ["stone_furnace", "steel_furnace"]
+    },
+    "iron_gear_wheel": {
+        "time": 0.5,
+        "ingredients": {"iron_plate": 2},
+        "stations": ["assembling_machine_1", "assembling_machine_2", "assembling_machine_3"]
+    },
+    "automation_science_pack": {
+        "time": 5,
+        "ingredients": {
+            "iron_gear_wheel": 1,
+            "copper_plate": 1
+        },
+        "stations": ["assembling_machine_1", "assembling_machine_2", "assembling_machine_3"]
+    },
+    "automation_science": {
+        "time": 15,
+        "ingredients": {"automation_science_pack": 1},
+        "stations": ["research_lab"]
+    }
+}
