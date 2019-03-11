@@ -2,8 +2,13 @@ package main
 
 import (
 	"encoding/json"
+	"flag"
 	"fmt"
 	"io/ioutil"
+	"math"
+	"os"
+	"sort"
+	"strings"
 
 	"github.com/pkg/errors"
 )
@@ -11,7 +16,7 @@ import (
 // Entity wraps a factorio entity
 type Entity struct {
 	ID          string
-	Time        float32
+	Time        float64
 	Ingredients []Ingredient
 	Stations    []*Station
 }
@@ -20,7 +25,7 @@ type Entity struct {
 type Station struct {
 	ID    string
 	Level int
-	Speed float32 // items per second
+	Speed float64 // items per second
 }
 
 // Ingredient represents an ingredient in a crafting recipe.
@@ -36,7 +41,7 @@ var entities = make(map[string]*Entity)
 func readStations() error {
 	type jsonStation struct {
 		Level int
-		Speed float32
+		Speed float64
 	}
 
 	var stationList map[string]jsonStation
@@ -57,7 +62,7 @@ func readStations() error {
 
 func readEntities() error {
 	type jsonEntity struct {
-		Time        float32
+		Time        float64
 		Ingredients map[string]int
 		Stations    []string
 	}
@@ -117,60 +122,57 @@ func readEntities() error {
 	return nil
 }
 
-type craft struct {
-	s *Station
-	e *Entity
-	q float32
+type Production struct {
+	e   *Entity
+	ips float64
+	s   *Station
+	sc  float64
 }
 
-type craftList map[string]*craft
+type ProdList map[string]*Production
 
-func addCraft(e *Entity, s *Station, count float32, techLevel int, cl craftList) {
-	c := cl[e.ID]
-	if c == nil {
-		c = &craft{
-			s: s,
-			e: e,
-			q: 0,
-		}
-		cl[e.ID] = c
+func (pl ProdList) add(e *Entity, ips float64) {
+	p := pl[e.ID]
+	if p == nil {
+		p = &Production{e: e}
+		pl[e.ID] = p
 	}
-	c.q += count
-
-	cycleTime := e.Time / s.Speed
-
-	// count / (e.Time / s.Speed)
+	p.ips += ips
 
 	for _, i := range e.Ingredients {
-		ie := i.Entity
-		is := ie.stationForLevel(techLevel)
-		itemsNeeded := count * float32(i.Quantity)
-		addCraft(i.Entity, is, itemsNeeded/cycleTime*(ie.Time/is.Speed), techLevel, cl)
+		pl.add(i.Entity, ips*float64(i.Quantity))
 	}
 }
 
-func getRecipe(name string, count int, techLevel int) craftList {
-	cl := make(craftList)
-	e := entities[name]
-	if e == nil {
-		panic("unknown entity " + name)
-	}
-	s := e.stationForLevel(techLevel)
-	addCraft(e, s, float32(count), techLevel, cl)
-	return cl
-}
+func NewProduction(name string, ips float64, techLevel int) (ProdList, error) {
+	pl := make(ProdList)
 
-func (e *Entity) stationForLevel(level int) *Station {
-	var best *Station
-	for _, s := range e.Stations {
-		if s.Level > level {
-			continue
-		}
-		if best == nil || best.Level < level {
-			best = s
-		}
+	if e := entities[name]; e != nil {
+		pl.add(e, ips)
+	} else {
+		return nil, errors.Errorf("unknown entity %s", name)
 	}
-	return best
+
+	// update production list with appropriate stations
+	for _, p := range pl {
+		for _, s := range p.e.Stations {
+			if s.Level > techLevel {
+				continue
+			}
+			c := math.Ceil(p.ips * p.e.Time / s.Speed)
+			if p.s == nil || c < p.sc || (s.Level < p.s.Level && c == p.sc) {
+				p.s = s
+				p.sc = c
+			}
+		}
+		if p.s == nil {
+			return nil, errors.Errorf("no station available for entity %s at tech level %d", p.e.ID, techLevel)
+		}
+		// adjust ips
+		// p.ips = p.sc * p.s.Speed / p.e.Time
+	}
+
+	return pl, nil
 }
 
 func main() {
@@ -182,11 +184,44 @@ func main() {
 		panic(err)
 	}
 
-	name := "automation_science_pack"
-	// nname := "iron_plate"
-	count := 5
-	cl := getRecipe(name, count, 1)
-	for _, c := range cl {
-		fmt.Printf("%.2f x %s\t-> %s - %.2f items/s\n", c.q, c.s.ID, c.e.ID, c.q*c.s.Speed/c.e.Time)
+	var (
+		list = flag.Bool("list", false, "lists known entities")
+		name = flag.String("e", "", "entity `name`")
+		ips  = flag.Float64("i", 1.0, "where `ips` is the number of items per second")
+		l    = flag.Int("l", 3, "maximum assembly machine `level`")
+	)
+
+	flag.Parse()
+
+	if *list {
+		fmt.Println("Known entities:")
+		var el []string
+		for k := range entities {
+			el = append(el, k)
+		}
+		sort.Strings(el)
+		for _, en := range el {
+			fmt.Println(en)
+		}
+		os.Exit(0)
+	}
+
+	if *l < 1 {
+		fmt.Fprintf(os.Stderr, "error: assembly machine level must be greater or equal to 1")
+	}
+	if *ips <= 0.0 {
+		fmt.Fprintf(os.Stderr, "error: items per second must be a non-zero positive number")
+	}
+
+	*name = strings.Replace(strings.ToLower(*name), " ", "_", -1)
+
+	pl, err := NewProduction(*name, *ips, *l)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "error: %v\n", err)
+		os.Exit(1)
+	}
+	for _, p := range pl {
+		// fmt.Printf("%s - %.2f items/s\n", p.e.ID, p.ips)
+		fmt.Printf("%.2f x %s\t-> %s - %.2f items/s\n", p.sc, p.s.ID, p.e.ID, p.ips)
 	}
 }

@@ -31,7 +31,7 @@
         "stations": ["assembling_machine_1", "assembling_machine_2", "assembling_machine_3"]
     },
     "automation_science": {
-        "time": 15,
+        "time": 30,
         "ingredients": {"automation_science_pack": 1},
         "stations": ["research_lab"]
     }

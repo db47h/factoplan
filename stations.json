@@ -1,8 +1,4 @@
 {
-    "burner_mining_drill": { 
-        "level": 0,
-        "speed":  0.5
-    },
     "electric_mining_drill": { 
         "level": 0,
         "speed":  0.5
@@ -16,16 +12,16 @@
         "speed": 2
     },
     "assembling_machine_1": {
-        "level": 0,
-        "speed": 0.5
-    },
-    "assembling_machine_2": {
         "level": 1,
         "speed": 0.5
     },
-    "assembling_machine_3": {
+    "assembling_machine_2": {
         "level": 2,
-        "speed": 0.5
+        "speed": 0.75
+    },
+    "assembling_machine_3": {
+        "level": 3,
+        "speed": 1.25
     },
     "research_lab": {
         "level": 0,
