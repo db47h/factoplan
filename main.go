@@ -9,6 +9,7 @@ import (
 	"os"
 	"sort"
 	"strings"
+	"text/tabwriter"
 
 	"github.com/pkg/errors"
 )
@@ -31,7 +32,7 @@ type Station struct {
 // Ingredient represents an ingredient in a crafting recipe.
 //
 type Ingredient struct {
-	Quantity int
+	Quantity float64
 	Entity   *Entity
 }
 
@@ -63,7 +64,7 @@ func readStations() error {
 func readEntities() error {
 	type jsonEntity struct {
 		Time        float64
-		Ingredients map[string]int
+		Ingredients map[string]float64
 		Stations    []string
 	}
 
@@ -140,7 +141,7 @@ func (pl ProdList) add(e *Entity, ips float64) {
 	p.ips += ips
 
 	for _, i := range e.Ingredients {
-		pl.add(i.Entity, ips*float64(i.Quantity))
+		pl.add(i.Entity, ips*i.Quantity)
 	}
 }
 
@@ -220,8 +221,11 @@ func main() {
 		fmt.Fprintf(os.Stderr, "error: %v\n", err)
 		os.Exit(1)
 	}
+	w := tabwriter.NewWriter(os.Stdout, 0, 0, 1, ' ', 0)
+
 	for _, p := range pl {
 		// fmt.Printf("%s - %.2f items/s\n", p.e.ID, p.ips)
-		fmt.Printf("%.2f x %s\t-> %s - %.2f items/s\n", p.sc, p.s.ID, p.e.ID, p.ips)
+		fmt.Fprintf(w, "%.2f\t%s\t%s\t%.2f items/s\n", p.sc, p.s.ID, p.e.ID, p.ips)
 	}
+	w.Flush()
 }

@@ -31,8 +31,44 @@
         "stations": ["assembling_machine_1", "assembling_machine_2", "assembling_machine_3"]
     },
     "automation_science": {
-        "time": 30,
+        "time": 10,
         "ingredients": {"automation_science_pack": 1},
+        "stations": ["research_lab"]
+    },
+    "copper_cable": {
+        "time": 0.25,
+        "ingredients": {"copper_plate": 0.5},
+        "stations": ["assembling_machine_1", "assembling_machine_2", "assembling_machine_3"]
+    },
+    "electronic_circuit": {
+        "time": 0.5,
+        "ingredients": {"copper_cable": 3, "iron_plate": 1},
+        "stations": ["assembling_machine_1", "assembling_machine_2", "assembling_machine_3"]
+    },
+    "inserter": {
+        "time": 0.5,
+        "ingredients": {"iron_plate": 1, "iron_gear_wheel": 1, "electronic_circuit": 1},
+        "stations": ["assembling_machine_1", "assembling_machine_2", "assembling_machine_3"]
+    },
+    "transporter_belt": {
+        "time": 0.5,
+        "ingredients": {"iron_plate": 1, "iron_gear_wheel": 1},
+        "stations": ["assembling_machine_1", "assembling_machine_2", "assembling_machine_3"]
+    },
+    "logistic_science_pack": {
+        "time": 6,
+        "ingredients": {
+            "transporter_belt": 1,
+            "inserter": 1
+        },
+        "stations": ["assembling_machine_1", "assembling_machine_2", "assembling_machine_3"]
+    },
+    "logistic_science": {
+        "time": 10,
+        "ingredients": {
+            "automation_science_pack": 1,
+            "logistic_science_pack": 1
+        },
         "stations": ["research_lab"]
     }
 }
