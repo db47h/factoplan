@@ -26,5 +26,13 @@
     "research_lab": {
         "level": 0,
         "speed": 1
+    },
+    "chemical_plant": {
+        "level": 2,
+        "speed": 1
+    },
+    "oil_refinery": {
+        "level": 2,
+        "speed": 1
     }
 }

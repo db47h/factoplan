@@ -63,12 +63,13 @@ func readStations() error {
 
 func readEntities() error {
 	type jsonEntity struct {
+		Batch       float64
 		Time        float64
 		Ingredients map[string]float64
 		Stations    []string
 	}
 
-	var el map[string]jsonEntity
+	var el map[string]*jsonEntity
 
 	data, err := ioutil.ReadFile("entities.json")
 	if err != nil {
@@ -83,9 +84,12 @@ func readEntities() error {
 		if e.Time == 0 {
 			return errors.Errorf("entity %s: invalid 0 time", id)
 		}
+		if e.Batch == 0 {
+			e.Batch = 1
+		}
 		ne := &Entity{
 			ID:       id,
-			Time:     e.Time,
+			Time:     e.Time / e.Batch,
 			Stations: make([]*Station, 0, len(e.Stations)),
 		}
 		if len(e.Stations) == 0 {
@@ -110,14 +114,8 @@ func readEntities() error {
 			if ie == nil {
 				return errors.Errorf("entity %s: unknown ingredient %s", id, iid)
 			}
-			ne.Ingredients = append(ne.Ingredients, Ingredient{Quantity: q, Entity: ie})
+			ne.Ingredients = append(ne.Ingredients, Ingredient{Quantity: q / e.Batch, Entity: ie})
 		}
-
-		// b, err := json.MarshalIndent(ne, "", "\t")
-		// if err != nil {
-		// 	panic(err)
-		// }
-		// fmt.Println("added entity ", id, " : ", string(b))
 	}
 
 	return nil
@@ -167,10 +165,8 @@ func NewProduction(name string, ips float64, techLevel int) (ProdList, error) {
 			}
 		}
 		if p.s == nil {
-			return nil, errors.Errorf("no station available for entity %s at tech level %d", p.e.ID, techLevel)
+			return nil, errors.Errorf("no station available to produce entity %s at tech level %d", p.e.ID, techLevel)
 		}
-		// adjust ips
-		// p.ips = p.sc * p.s.Speed / p.e.Time
 	}
 
 	return pl, nil
@@ -221,11 +217,21 @@ func main() {
 		fmt.Fprintf(os.Stderr, "error: %v\n", err)
 		os.Exit(1)
 	}
-	w := tabwriter.NewWriter(os.Stdout, 0, 0, 1, ' ', 0)
 
+	var spl []*Production
 	for _, p := range pl {
-		// fmt.Printf("%s - %.2f items/s\n", p.e.ID, p.ips)
-		fmt.Fprintf(w, "%.2f\t%s\t%s\t%.2f items/s\n", p.sc, p.s.ID, p.e.ID, p.ips)
+		spl = append(spl, p)
+	}
+	sort.Slice(spl, func(i, j int) bool {
+		return spl[i].s.ID < spl[j].s.ID || (spl[i].s.ID == spl[j].s.ID && spl[i].e.ID < spl[j].e.ID)
+	})
+
+	w := tabwriter.NewWriter(os.Stdout, 0, 0, 1, ' ', 0)
+	fmt.Fprintf(w, "#\tProducer\tItem\titems/s\n")
+	fmt.Fprintf(w, "--\t-------------------------\t-------------------------\t-------\n")
+
+	for _, p := range spl {
+		fmt.Fprintf(w, "%.0f\t%s\t%s\t%.2f\n", p.sc, p.s.ID, p.e.ID, p.ips)
 	}
 	w.Flush()
 }
