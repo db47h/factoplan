@@ -1,222 +1,237 @@
-{
-    "iron_ore": {
+[
+    {
         "time": 1,
-        "stations": ["electric_mining_drill"]
+        "product": {"iron_ore": 1},
+        "factories": ["electric_mining_drill"]
     },
-    "copper_ore": {
+    {
         "time": 1,
-        "stations": ["electric_mining_drill"]
+        "product": {"copper_ore": 1},
+        "factories": ["electric_mining_drill"]
     },
-    "iron_plate": {
+    {
         "time": 3.2,
+        "product": {"iron_plate": 1},
         "ingredients": {"iron_ore": 1},
-        "stations": ["stone_furnace", "steel_furnace"]
+        "factories": ["stone_furnace", "steel_furnace"]
     },
-    "copper_plate": {
+    {
         "time": 3.2,
+        "product": {"copper_plate": 1},
         "ingredients": {"copper_ore": 1},
-        "stations": ["stone_furnace", "steel_furnace"]
+        "factories": ["stone_furnace", "steel_furnace"]
     },
-    "iron_gear_wheel": {
+    {
         "time": 0.5,
+        "product": {"iron_gear_wheel": 1},
         "ingredients": {"iron_plate": 2},
-        "stations": ["assembling_machine_1", "assembling_machine_2", "assembling_machine_3"]
+        "factories": ["assembling_machine_1", "assembling_machine_2", "assembling_machine_3"]
     },
-    "automation_science_pack": {
+    {
         "time": 5,
+        "product": {"automation_science_pack": 1},
         "ingredients": {
             "iron_gear_wheel": 1,
             "copper_plate": 1
         },
-        "stations": ["assembling_machine_1", "assembling_machine_2", "assembling_machine_3"]
+        "factories": ["assembling_machine_1", "assembling_machine_2", "assembling_machine_3"]
     },
-    "automation_science": {
+    {
         "time": 30,
+        "product": {"automation_science": 1},
         "ingredients": {"automation_science_pack": 1},
-        "stations": ["research_lab"]
+        "factories": ["research_lab"]
     },
 
-    "copper_cable": {
-        "batch": 2,
+    {
         "time": 0.5,
+        "product": {"copper_cable": 2},
         "ingredients": {"copper_plate": 1},
-        "stations": ["assembling_machine_1", "assembling_machine_2", "assembling_machine_3"]
+        "factories": ["assembling_machine_1", "assembling_machine_2", "assembling_machine_3"]
     },
-    "electronic_circuit": {
+    {
         "time": 0.5,
+        "product": {"electronic_circuit": 1},
         "ingredients": {"copper_cable": 3, "iron_plate": 1},
-        "stations": ["assembling_machine_1", "assembling_machine_2", "assembling_machine_3"]
+        "factories": ["assembling_machine_1", "assembling_machine_2", "assembling_machine_3"]
     },
-    "inserter": {
+    {
         "time": 0.5,
+        "product": {"inserter": 1},
         "ingredients": {"iron_plate": 1, "iron_gear_wheel": 1, "electronic_circuit": 1},
-        "stations": ["assembling_machine_1", "assembling_machine_2", "assembling_machine_3"]
+        "factories": ["assembling_machine_1", "assembling_machine_2", "assembling_machine_3"]
     },
-    "transporter_belt": {
-        "batch": 2,
+    {
         "time": 0.5,
+        "product": {"transporter_belt": 2},
         "ingredients": {"iron_plate": 1, "iron_gear_wheel": 1},
-        "stations": ["assembling_machine_1", "assembling_machine_2", "assembling_machine_3"]
+        "factories": ["assembling_machine_1", "assembling_machine_2", "assembling_machine_3"]
     },
-    "logistic_science_pack": {
+    {
         "time": 6,
-        "ingredients": {
-            "transporter_belt": 1,
-            "inserter": 1
-        },
-        "stations": ["assembling_machine_1", "assembling_machine_2", "assembling_machine_3"]
+        "product": {"logistic_science_pack": 1},
+        "ingredients": {"transporter_belt": 1, "inserter": 1},
+        "factories": ["assembling_machine_1", "assembling_machine_2", "assembling_machine_3"]
     },
-    "logistic_science": {
+    {
         "time": 30,
+        "product": {"logistic_science": 1},
         "ingredients": {
             "automation_science_pack": 1,
             "logistic_science_pack": 1
         },
-        "stations": ["research_lab"]
+        "factories": ["research_lab"]
     },
 
-    "steel_plate": {
+    {
         "time": 16,
+        "product": {"steel_plate": 1},
         "ingredients": {"iron_plate": 5},
-        "stations": ["stone_furnace", "steel_furnace"]
+        "factories": ["stone_furnace", "steel_furnace"]
     },
-    "stone": {
+    {
         "time": 1,
-        "stations": ["electric_mining_drill"]
+        "product": {"stone": 1},
+        "factories": ["electric_mining_drill"]
     },
-    "stone_brick": {
+    {
         "time": 3.2,
+        "product": {"stone_brick": 1},
         "ingredients": {"stone": 2},
-        "stations": ["stone_furnace", "steel_furnace"]
+        "factories": ["stone_furnace", "steel_furnace"]
     },
-    "wall": {
+    {
         "time": 0.5,
+        "product": {"wall": 1},
         "ingredients": {"stone_brick": 5},
-        "stations": ["assembling_machine_1", "assembling_machine_2", "assembling_machine_3"]
+        "factories": ["assembling_machine_1", "assembling_machine_2", "assembling_machine_3"]
     },
-    "firearm_magazine": {
+    {
         "time": 1,
+        "product": {"firearm_magazine": 1},
         "ingredients": {"iron_plate": 4},
-        "stations": ["assembling_machine_1", "assembling_machine_2", "assembling_machine_3"]
+        "factories": ["assembling_machine_1", "assembling_machine_2", "assembling_machine_3"]
     },
-    "piercing_round_magazine": {
+    {
         "time": 3,
+        "product": {"piercing_round_magazine": 1},
         "ingredients": {"copper_plate": 5, "steel_plate": 1, "firearm_magazine": 1},
-        "stations": ["assembling_machine_1", "assembling_machine_2", "assembling_machine_3"]
+        "factories": ["assembling_machine_1", "assembling_machine_2", "assembling_machine_3"]
     },
-    "coal": {
+    {
         "time": 1,
-        "stations": ["electric_mining_drill"]
+        "product": {"coal": 1},
+        "factories": ["electric_mining_drill"]
     },
-    "grenade": {
+    {
         "time": 8,
+        "product": {"grenade": 1},
         "ingredients": {"coal": 10, "iron_plate": 5},
-        "stations": ["assembling_machine_1", "assembling_machine_2", "assembling_machine_3"]
+        "factories": ["assembling_machine_1", "assembling_machine_2", "assembling_machine_3"]
     },
-    "military_science_pack": {
-        "batch": 2,
+    {
         "time": 10,
+        "product": {"military_science_pack": 2},
         "ingredients": {"piercing_round_magazine": 1, "grenade": 1, "wall": 2},
-        "stations": ["assembling_machine_1", "assembling_machine_2", "assembling_machine_3"]
+        "factories": ["assembling_machine_1", "assembling_machine_2", "assembling_machine_3"]
     },
-    "military_science": {
+    {
         "time": 30,
+        "product": {"military_science": 1},
         "ingredients": {
             "automation_science_pack": 1,
             "logistic_science_pack": 1,
             "military_science_pack": 0.8
         },
-        "stations": ["research_lab"]
+        "factories": ["research_lab"]
     },
 
-    "petroleum_gas": {
-        "batch": 55,
+    {
         "time": 5,
-        "stations": ["oil_refinery"]
+        "product": {"petroleum_gas": 55, "light_oil": 45, "heavy_oil": 10},
+        "factories": ["oil_refinery"]
     },
-    "light_oil": {
-        "batch": 45,
-        "time": 5,
-        "stations": ["oil_refinery"]
-    },
-    "heavy_oil": {
-        "batch": 10,
-        "time": 5,
-        "stations": ["oil_refinery"]
-    },
-    "solid_fuel": {
+    {
         "time": 2,
+        "product": {"solid_fuel": 1},
         "ingredients": {"light_oil": 10},
-        "stations": ["chemical_plant"]
+        "factories": ["chemical_plant"]
     },
-    "plastic_bar": {
-        "batch": 2,
+    {
         "time": 1,
+        "product": {"plastic_bar": 2},
         "ingredients": {"coal": 1, "petroleum_gas": 20},
-        "stations": ["chemical_plant"]
+        "factories": ["chemical_plant"]
     },
-    "advanced_circuit": {
+    {
         "time": 6,
+        "product": {"advanced_circuit": 1},
         "ingredients": {"plastic_bar": 2, "copper_cable": 4, "electronic_circuit": 2},
-        "stations": ["assembling_machine_1", "assembling_machine_2", "assembling_machine_3"]
+        "factories": ["assembling_machine_1", "assembling_machine_2", "assembling_machine_3"]
     },
-    "pipe": {
+    {
         "time": 0.5,
+        "product": {"pipe": 1},
         "ingredients": {"iron_plate": 1},
-        "stations": ["assembling_machine_1", "assembling_machine_2", "assembling_machine_3"]
+        "factories": ["assembling_machine_1", "assembling_machine_2", "assembling_machine_3"]
     },
-    "engine_unit": {
+    {
         "time": 10,
+        "product":{"engine_unit":1},
         "ingredients": {"steel_plate": 1, "iron_gear_wheel": 1, "pipe": 2},
-        "stations": ["assembling_machine_1", "assembling_machine_2", "assembling_machine_3"]
+        "factories": ["assembling_machine_1", "assembling_machine_2", "assembling_machine_3"]
     },
-    "chemical_science_pack": {
-        "batch": 2,
+    {
         "time": 24,
+        "product":{"chemical_science_pack":2},
         "ingredients": {"solid_fuel": 1, "advanced_circuit": 3, "engine_unit": 2},
-        "stations": ["assembling_machine_1", "assembling_machine_2", "assembling_machine_3"]
+        "factories": ["assembling_machine_1", "assembling_machine_2", "assembling_machine_3"]
     },
-    "chemical_science": {
+    {
         "time": 30,
+        "product": {"chemical_science": 1},
         "ingredients": {
             "automation_science_pack": 1,
             "logistic_science_pack": 1,
             "military_science_pack": 0.8,
             "chemical_science_pack": 1
         },
-        "stations": ["research_lab"]
+        "factories": ["research_lab"]
     },
 
-    "productivity_module": {
+    {
         "time": 15,
+        "product": {"productivity_module": 1},
         "ingredients": {"electronic_circuit": 5, "advanced_circuit": 5},
-        "stations": ["assembling_machine_1", "assembling_machine_2", "assembling_machine_3"]
+        "factories": ["assembling_machine_1", "assembling_machine_2", "assembling_machine_3"]
     },
-    "electric_furnace": {
+    {
         "time": 5,
+        "product": {"electric_furnace": 1},
         "ingredients": {"steel_plate": 10, "advanced_circuit": 5, "stone_brick": 10},
-        "stations": ["assembling_machine_1", "assembling_machine_2", "assembling_machine_3"]
+        "factories": ["assembling_machine_1", "assembling_machine_2", "assembling_machine_3"]
     },
-    "iron_stick": {
-        "batch": 2,
+    {
         "time": 0.5,
+        "product": {"iron_stick": 2},
         "ingredients": {"iron_plate": 1},
-        "stations": ["assembling_machine_1", "assembling_machine_2", "assembling_machine_3"]
+        "factories": ["assembling_machine_1", "assembling_machine_2", "assembling_machine_3"]
     },
-    "rail": {
-        "batch": 2,
+    {
         "time": 0.5,
+        "product": {"rail": 2},
         "ingredients": {"stone": 1, "steel_plate": 1, "iron_stick": 1},
-        "stations": ["assembling_machine_1", "assembling_machine_2", "assembling_machine_3"]
+        "factories": ["assembling_machine_1", "assembling_machine_2", "assembling_machine_3"]
     },
-    "production_science_pack": {
-        "batch": 3,
+    {
         "time": 21,
+        "product": {"production_science_pack": 3},
         "ingredients": {"rail": 30, "electric_furnace": 1, "productivity_module": 1},
-        "stations": ["assembling_machine_1", "assembling_machine_2", "assembling_machine_3"]
+        "factories": ["assembling_machine_1", "assembling_machine_2", "assembling_machine_3"]
     },
-    "production_science": {
+    {
         "time": 30,
+        "product": {"production_science": 1},
         "ingredients": {
             "automation_science_pack": 1,
             "logistic_science_pack": 1,
@@ -224,6 +239,6 @@
             "chemical_science_pack": 1,
             "production_science_pack": 0.4
         },
-        "stations": ["research_lab"]
+        "factories": ["research_lab"]
     }
-}
+]

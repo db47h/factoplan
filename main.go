@@ -19,11 +19,11 @@ type Recipe struct {
 	ID          string
 	Time        float64
 	Ingredients []Ingredient
-	Stations    []*Station
+	Factories   []*Factory
 }
 
-// A Station represents a crafting station
-type Station struct {
+// A Factory wraps a factorio factory
+type Factory struct {
 	ID    string
 	Level int
 	Speed float64 // items per second
@@ -36,86 +36,87 @@ type Ingredient struct {
 	Recipe   *Recipe
 }
 
-var stations = make(map[string]*Station)
+var factories = make(map[string]*Factory)
 var recipes = make(map[string]*Recipe)
 
-func readStations() error {
+func loadFactories() error {
 	type jsonStation struct {
 		Level int
 		Speed float64
 	}
 
-	var stationList map[string]jsonStation
+	var fs map[string]jsonStation
 
-	data, err := ioutil.ReadFile("stations.json")
+	data, err := ioutil.ReadFile("factories.json")
 	if err != nil {
-		return errors.Wrap(err, "failed to read stations.json")
+		return errors.Wrap(err, "failed to read factories.json")
 	}
-	err = json.Unmarshal(data, &stationList)
+	err = json.Unmarshal(data, &fs)
 	if err != nil {
-		return errors.Wrap(err, "failed to read json data from stations.json")
+		return errors.Wrap(err, "failed to read json data from factories.json")
 	}
-	for id, s := range stationList {
-		stations[id] = &Station{id, s.Level, s.Speed}
+	for id, s := range fs {
+		factories[id] = &Factory{id, s.Level, s.Speed}
 	}
 	return nil
 }
 
-func readRecipes() error {
+func loadRecipes() error {
 	type jsonRecipe struct {
-		Batch       float64
 		Time        float64
+		Product     map[string]float64
 		Ingredients map[string]float64
-		Stations    []string
+		Factories   []string
 	}
 
-	var jr map[string]*jsonRecipe
+	var rs []jsonRecipe
 
 	data, err := ioutil.ReadFile("recipes.json")
 	if err != nil {
 		return errors.Wrap(err, "failed to read recipes.json")
 	}
-	err = json.Unmarshal(data, &jr)
+	err = json.Unmarshal(data, &rs)
 	if err != nil {
 		return errors.Wrap(err, "failed to read json data from recipes.json")
 	}
 
-	for id, r := range jr {
-		if r.Batch == 0 {
-			r.Batch = 1
-		}
+	for _, r := range rs {
 		if r.Time <= 0 {
-			return errors.Errorf("recipe for item %s: invalid negative or 0 time", id)
+			return errors.Errorf("recipe for items %v: invalid negative or 0 time", r.Product)
 		}
-		if len(r.Stations) == 0 {
-			return errors.Errorf("recipe for item %s: no crafting stations", id)
+		if len(r.Factories) == 0 {
+			return errors.Errorf("recipe for items %v: no factories", r.Product)
 		}
-		st := make([]*Station, 0, len(r.Stations))
-		for _, sid := range r.Stations {
-			s := stations[sid]
-			if s == nil {
-				return errors.Errorf("recipe for item %s: unknown station %s", id, sid)
+		fs := make([]*Factory, 0, len(r.Factories))
+		for _, fid := range r.Factories {
+			f := factories[fid]
+			if f == nil {
+				return errors.Errorf("recipe for items %v: unknown factory %s", r.Product, fid)
 			}
-			st = append(st, s)
+			fs = append(fs, f)
 		}
-		recipes[id] = &Recipe{
-			ID:       id,
-			Time:     r.Time / r.Batch,
-			Stations: st,
+		for id, q := range r.Product {
+			recipes[id] = &Recipe{
+				ID:        id,
+				Time:      r.Time / q,
+				Factories: fs,
+			}
 		}
 	}
 
 	// fill in ingredients
-	for id, r := range jr {
-		is := make([]Ingredient, 0, len(r.Ingredients))
-		for iid, q := range r.Ingredients {
-			ir := recipes[iid]
-			if ir == nil {
-				return errors.Errorf("recipe for item %s: unknown ingredient %s", id, iid)
+	for _, r := range rs {
+		for id, pq := range r.Product {
+			is := make([]Ingredient, 0, len(r.Ingredients))
+			for iid, iq := range r.Ingredients {
+				ir := recipes[iid]
+				if ir == nil {
+					return errors.Errorf("recipe for item %s: unknown ingredient %s", id, iid)
+				}
+				is = append(is, Ingredient{Quantity: iq / pq, Recipe: ir})
 			}
-			is = append(is, Ingredient{Quantity: q / r.Batch, Recipe: ir})
+			recipes[id].Ingredients = is
 		}
-		recipes[id].Ingredients = is
 	}
 
 	return nil
@@ -124,8 +125,8 @@ func readRecipes() error {
 type Production struct {
 	r   *Recipe
 	ips float64
-	s   *Station
-	sc  float64
+	f   *Factory
+	fc  float64
 }
 
 type ProdList map[string]*Production
@@ -152,20 +153,20 @@ func NewProduction(name string, ips float64, techLevel int) (ProdList, error) {
 		return nil, errors.Errorf("unknown item %s", name)
 	}
 
-	// update production list with appropriate stations
+	// update production list with appropriate factories
 	for _, p := range pl {
-		for _, s := range p.r.Stations {
-			if s.Level > techLevel {
+		for _, f := range p.r.Factories {
+			if f.Level > techLevel {
 				continue
 			}
-			c := math.Ceil(p.ips * p.r.Time / s.Speed)
-			if p.s == nil || c < p.sc || (s.Level < p.s.Level && c == p.sc) {
-				p.s = s
-				p.sc = c
+			c := math.Ceil(p.ips * p.r.Time / f.Speed)
+			if p.f == nil || c < p.fc || (f.Level < p.f.Level && c == p.fc) {
+				p.f = f
+				p.fc = c
 			}
 		}
-		if p.s == nil {
-			return nil, errors.Errorf("no station available to produce item %s at tech level %d", p.r.ID, techLevel)
+		if p.f == nil {
+			return nil, errors.Errorf("no factory available to produce item %s at tech level %d", p.r.ID, techLevel)
 		}
 	}
 
@@ -173,15 +174,9 @@ func NewProduction(name string, ips float64, techLevel int) (ProdList, error) {
 }
 
 func main() {
-	var err error
-	if err = readStations(); err != nil {
-		panic(err)
-	}
-	if err = readRecipes(); err != nil {
-		panic(err)
-	}
-
 	var (
+		err error
+
 		list = flag.Bool("list", false, "lists known items")
 		name = flag.String("i", "", "item `name`")
 		ips  = flag.Float64("r", 1.0, "production rate in `items per second`")
@@ -189,6 +184,13 @@ func main() {
 	)
 
 	flag.Parse()
+
+	if err = loadFactories(); err != nil {
+		panic(err)
+	}
+	if err = loadRecipes(); err != nil {
+		panic(err)
+	}
 
 	if *list {
 		fmt.Println("Known recipes:")
@@ -223,7 +225,7 @@ func main() {
 		spl = append(spl, p)
 	}
 	sort.Slice(spl, func(i, j int) bool {
-		return spl[i].s.ID < spl[j].s.ID || (spl[i].s.ID == spl[j].s.ID && spl[i].r.ID < spl[j].r.ID)
+		return spl[i].f.ID < spl[j].f.ID || (spl[i].f.ID == spl[j].f.ID && spl[i].r.ID < spl[j].r.ID)
 	})
 
 	w := tabwriter.NewWriter(os.Stdout, 0, 0, 1, ' ', 0)
@@ -231,7 +233,7 @@ func main() {
 	fmt.Fprintf(w, "--\t---------------------\t-----------------------\t-------\t-------\n")
 
 	for _, p := range spl {
-		fmt.Fprintf(w, "%.0f\t%s\t%s\t%.2f\t%.0f\n", p.sc, p.s.ID, p.r.ID, p.ips, p.ips*60.0)
+		fmt.Fprintf(w, "%.0f\t%s\t%s\t%.2f\t%.0f\n", p.fc, p.f.ID, p.r.ID, p.ips, p.ips*60.0)
 	}
 	w.Flush()
 }
