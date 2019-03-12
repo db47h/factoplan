@@ -14,8 +14,8 @@ import (
 	"github.com/pkg/errors"
 )
 
-// Entity wraps a factorio entity
-type Entity struct {
+// Recipe wraps a factorio recipe
+type Recipe struct {
 	ID          string
 	Time        float64
 	Ingredients []Ingredient
@@ -33,11 +33,11 @@ type Station struct {
 //
 type Ingredient struct {
 	Quantity float64
-	Entity   *Entity
+	Recipe   *Recipe
 }
 
 var stations = make(map[string]*Station)
-var entities = make(map[string]*Entity)
+var recipes = make(map[string]*Recipe)
 
 func readStations() error {
 	type jsonStation struct {
@@ -61,68 +61,68 @@ func readStations() error {
 	return nil
 }
 
-func readEntities() error {
-	type jsonEntity struct {
+func readRecipes() error {
+	type jsonRecipe struct {
 		Batch       float64
 		Time        float64
 		Ingredients map[string]float64
 		Stations    []string
 	}
 
-	var el map[string]*jsonEntity
+	var jr map[string]*jsonRecipe
 
-	data, err := ioutil.ReadFile("entities.json")
+	data, err := ioutil.ReadFile("recipes.json")
 	if err != nil {
-		return errors.Wrap(err, "failed to read entities.json")
+		return errors.Wrap(err, "failed to read recipes.json")
 	}
-	err = json.Unmarshal(data, &el)
+	err = json.Unmarshal(data, &jr)
 	if err != nil {
-		return errors.Wrap(err, "failed to read json data from entities.json")
+		return errors.Wrap(err, "failed to read json data from recipes.json")
 	}
 
-	for id, e := range el {
-		if e.Time == 0 {
-			return errors.Errorf("entity %s: invalid 0 time", id)
+	for id, r := range jr {
+		if r.Batch == 0 {
+			r.Batch = 1
 		}
-		if e.Batch == 0 {
-			e.Batch = 1
+		if r.Time <= 0 {
+			return errors.Errorf("recipe for item %s: invalid negative or 0 time", id)
 		}
-		ne := &Entity{
-			ID:       id,
-			Time:     e.Time / e.Batch,
-			Stations: make([]*Station, 0, len(e.Stations)),
+		if len(r.Stations) == 0 {
+			return errors.Errorf("recipe for item %s: no crafting stations", id)
 		}
-		if len(e.Stations) == 0 {
-			return errors.Errorf("entity %s: no crafting stations", id)
-		}
-		for _, sid := range e.Stations {
+		st := make([]*Station, 0, len(r.Stations))
+		for _, sid := range r.Stations {
 			s := stations[sid]
 			if s == nil {
-				return errors.Errorf("entity %s: unknown station %s", id, sid)
+				return errors.Errorf("recipe for item %s: unknown station %s", id, sid)
 			}
-			ne.Stations = append(ne.Stations, s)
+			st = append(st, s)
 		}
-		entities[id] = ne
+		recipes[id] = &Recipe{
+			ID:       id,
+			Time:     r.Time / r.Batch,
+			Stations: st,
+		}
 	}
 
 	// fill in ingredients
-	for id, e := range el {
-		ne := entities[id]
-		ne.Ingredients = make([]Ingredient, 0, len(e.Ingredients))
-		for iid, q := range e.Ingredients {
-			ie := entities[iid]
-			if ie == nil {
-				return errors.Errorf("entity %s: unknown ingredient %s", id, iid)
+	for id, r := range jr {
+		is := make([]Ingredient, 0, len(r.Ingredients))
+		for iid, q := range r.Ingredients {
+			ir := recipes[iid]
+			if ir == nil {
+				return errors.Errorf("recipe for item %s: unknown ingredient %s", id, iid)
 			}
-			ne.Ingredients = append(ne.Ingredients, Ingredient{Quantity: q / e.Batch, Entity: ie})
+			is = append(is, Ingredient{Quantity: q / r.Batch, Recipe: ir})
 		}
+		recipes[id].Ingredients = is
 	}
 
 	return nil
 }
 
 type Production struct {
-	e   *Entity
+	r   *Recipe
 	ips float64
 	s   *Station
 	sc  float64
@@ -130,42 +130,42 @@ type Production struct {
 
 type ProdList map[string]*Production
 
-func (pl ProdList) add(e *Entity, ips float64) {
-	p := pl[e.ID]
+func (pl ProdList) add(r *Recipe, ips float64) {
+	p := pl[r.ID]
 	if p == nil {
-		p = &Production{e: e}
-		pl[e.ID] = p
+		p = &Production{r: r}
+		pl[r.ID] = p
 	}
 	p.ips += ips
 
-	for _, i := range e.Ingredients {
-		pl.add(i.Entity, ips*i.Quantity)
+	for _, i := range r.Ingredients {
+		pl.add(i.Recipe, ips*i.Quantity)
 	}
 }
 
 func NewProduction(name string, ips float64, techLevel int) (ProdList, error) {
 	pl := make(ProdList)
 
-	if e := entities[name]; e != nil {
-		pl.add(e, ips)
+	if r := recipes[name]; r != nil {
+		pl.add(r, ips)
 	} else {
-		return nil, errors.Errorf("unknown entity %s", name)
+		return nil, errors.Errorf("unknown item %s", name)
 	}
 
 	// update production list with appropriate stations
 	for _, p := range pl {
-		for _, s := range p.e.Stations {
+		for _, s := range p.r.Stations {
 			if s.Level > techLevel {
 				continue
 			}
-			c := math.Ceil(p.ips * p.e.Time / s.Speed)
+			c := math.Ceil(p.ips * p.r.Time / s.Speed)
 			if p.s == nil || c < p.sc || (s.Level < p.s.Level && c == p.sc) {
 				p.s = s
 				p.sc = c
 			}
 		}
 		if p.s == nil {
-			return nil, errors.Errorf("no station available to produce entity %s at tech level %d", p.e.ID, techLevel)
+			return nil, errors.Errorf("no station available to produce item %s at tech level %d", p.r.ID, techLevel)
 		}
 	}
 
@@ -177,23 +177,23 @@ func main() {
 	if err = readStations(); err != nil {
 		panic(err)
 	}
-	if err = readEntities(); err != nil {
+	if err = readRecipes(); err != nil {
 		panic(err)
 	}
 
 	var (
-		list = flag.Bool("list", false, "lists known entities")
-		name = flag.String("e", "", "entity `name`")
-		ips  = flag.Float64("i", 1.0, "where `ips` is the number of items per second")
+		list = flag.Bool("list", false, "lists known items")
+		name = flag.String("i", "", "item `name`")
+		ips  = flag.Float64("r", 1.0, "production rate in `items per second`")
 		l    = flag.Int("l", 3, "maximum assembly machine `level`")
 	)
 
 	flag.Parse()
 
 	if *list {
-		fmt.Println("Known entities:")
+		fmt.Println("Known recipes:")
 		var el []string
-		for k := range entities {
+		for k := range recipes {
 			el = append(el, k)
 		}
 		sort.Strings(el)
@@ -223,15 +223,15 @@ func main() {
 		spl = append(spl, p)
 	}
 	sort.Slice(spl, func(i, j int) bool {
-		return spl[i].s.ID < spl[j].s.ID || (spl[i].s.ID == spl[j].s.ID && spl[i].e.ID < spl[j].e.ID)
+		return spl[i].s.ID < spl[j].s.ID || (spl[i].s.ID == spl[j].s.ID && spl[i].r.ID < spl[j].r.ID)
 	})
 
 	w := tabwriter.NewWriter(os.Stdout, 0, 0, 1, ' ', 0)
-	fmt.Fprintf(w, "#\tProducer\tItem\titems/s\n")
+	fmt.Fprintf(w, "#\tFactory\tItem\titems/s\n")
 	fmt.Fprintf(w, "--\t-------------------------\t-------------------------\t-------\n")
 
 	for _, p := range spl {
-		fmt.Fprintf(w, "%.0f\t%s\t%s\t%.2f\n", p.sc, p.s.ID, p.e.ID, p.ips)
+		fmt.Fprintf(w, "%.0f\t%s\t%s\t%.2f\n", p.sc, p.s.ID, p.r.ID, p.ips)
 	}
 	w.Flush()
 }
