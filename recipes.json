@@ -124,7 +124,7 @@
         "ingredients": {
             "automation_science_pack": 1,
             "logistic_science_pack": 1,
-            "military_science_pack": 1
+            "military_science_pack": 0.8
         },
         "stations": ["research_lab"]
     },
@@ -181,11 +181,49 @@
         "ingredients": {
             "automation_science_pack": 1,
             "logistic_science_pack": 1,
+            "military_science_pack": 0.8,
+            "chemical_science_pack": 1
+        },
+        "stations": ["research_lab"]
+    },
+
+    "productivity_module": {
+        "time": 15,
+        "ingredients": {"electronic_circuit": 5, "advanced_circuit": 5},
+        "stations": ["assembling_machine_1", "assembling_machine_2", "assembling_machine_3"]
+    },
+    "electric_furnace": {
+        "time": 5,
+        "ingredients": {"steel_plate": 10, "advanced_circuit": 5, "stone_brick": 10},
+        "stations": ["assembling_machine_1", "assembling_machine_2", "assembling_machine_3"]
+    },
+    "iron_stick": {
+        "batch": 2,
+        "time": 0.5,
+        "ingredients": {"iron_plate": 1},
+        "stations": ["assembling_machine_1", "assembling_machine_2", "assembling_machine_3"]
+    },
+    "rail": {
+        "batch": 2,
+        "time": 0.5,
+        "ingredients": {"stone": 1, "steel_plate": 1, "iron_stick": 1},
+        "stations": ["assembling_machine_1", "assembling_machine_2", "assembling_machine_3"]
+    },
+    "production_science_pack": {
+        "batch": 3,
+        "time": 21,
+        "ingredients": {"rail": 30, "electric_furnace": 1, "productivity_module": 1},
+        "stations": ["assembling_machine_1", "assembling_machine_2", "assembling_machine_3"]
+    },
+    "production_science": {
+        "time": 30,
+        "ingredients": {
+            "automation_science_pack": 1,
+            "logistic_science_pack": 1,
+            "military_science_pack": 0.8,
             "chemical_science_pack": 1,
-            "military_science_pack": 0.5
+            "production_science_pack": 0.4
         },
         "stations": ["research_lab"]
     }
-
-    
 }

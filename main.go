@@ -227,11 +227,11 @@ func main() {
 	})
 
 	w := tabwriter.NewWriter(os.Stdout, 0, 0, 1, ' ', 0)
-	fmt.Fprintf(w, "#\tFactory\tItem\titems/s\n")
-	fmt.Fprintf(w, "--\t-------------------------\t-------------------------\t-------\n")
+	fmt.Fprintf(w, "#\tFactory\tItem\titems/s\titems/m\n")
+	fmt.Fprintf(w, "--\t---------------------\t-----------------------\t-------\t-------\n")
 
 	for _, p := range spl {
-		fmt.Fprintf(w, "%.0f\t%s\t%s\t%.2f\n", p.sc, p.s.ID, p.r.ID, p.ips)
+		fmt.Fprintf(w, "%.0f\t%s\t%s\t%.2f\t%.0f\n", p.sc, p.s.ID, p.r.ID, p.ips, p.ips*60.0)
 	}
 	w.Flush()
 }
