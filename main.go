@@ -25,7 +25,6 @@ type Recipe struct {
 // A Factory wraps a factorio factory
 type Factory struct {
 	ID    string
-	Level int
 	Speed float64 // items per second
 }
 
@@ -41,7 +40,6 @@ var recipes = make(map[string]*Recipe)
 
 func loadFactories() error {
 	type jsonStation struct {
-		Level int
 		Speed float64
 	}
 
@@ -56,7 +54,7 @@ func loadFactories() error {
 		return errors.Wrap(err, "failed to read json data from factories.json")
 	}
 	for id, s := range fs {
-		factories[id] = &Factory{id, s.Level, s.Speed}
+		factories[id] = &Factory{id, s.Speed}
 	}
 	return nil
 }
@@ -144,7 +142,7 @@ func (pl ProdList) add(r *Recipe, ips float64) {
 	}
 }
 
-func NewProduction(name string, ips float64, techLevel int) (ProdList, error) {
+func NewProduction(name string, ips float64) (ProdList, error) {
 	pl := make(ProdList)
 
 	if r := recipes[name]; r != nil {
@@ -156,17 +154,15 @@ func NewProduction(name string, ips float64, techLevel int) (ProdList, error) {
 	// update production list with appropriate factories
 	for _, p := range pl {
 		for _, f := range p.r.Factories {
-			if f.Level > techLevel {
-				continue
-			}
+			// pick the slowest compatible factory as long as the number of factories does not change in order to save energy
 			c := math.Ceil(p.ips * p.r.Time / f.Speed)
-			if p.f == nil || c < p.fc || (f.Level < p.f.Level && c == p.fc) {
+			if p.f == nil || c < p.fc || (c == p.fc && f.Speed < p.f.Speed) {
 				p.f = f
 				p.fc = c
 			}
 		}
 		if p.f == nil {
-			return nil, errors.Errorf("no factory available to produce item %s at tech level %d", p.r.ID, techLevel)
+			return nil, errors.Errorf("no factory available to produce item %s", p.r.ID)
 		}
 	}
 
@@ -180,7 +176,6 @@ func main() {
 		list = flag.Bool("list", false, "lists known items")
 		name = flag.String("i", "", "item `name`")
 		ips  = flag.Float64("r", 1.0, "production rate in `items per second`")
-		l    = flag.Int("l", 3, "maximum assembly machine `level`")
 	)
 
 	flag.Parse()
@@ -205,16 +200,13 @@ func main() {
 		os.Exit(0)
 	}
 
-	if *l < 1 {
-		fmt.Fprintf(os.Stderr, "error: assembly machine level must be greater or equal to 1")
-	}
 	if *ips <= 0.0 {
 		fmt.Fprintf(os.Stderr, "error: items per second must be a non-zero positive number")
 	}
 
 	*name = strings.Replace(strings.ToLower(*name), " ", "_", -1)
 
-	pl, err := NewProduction(*name, *ips, *l)
+	pl, err := NewProduction(*name, *ips)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "error: %v\n", err)
 		os.Exit(1)
