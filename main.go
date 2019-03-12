@@ -1,3 +1,5 @@
+//go:generate lua importer.lua "$HOME/.steam/steam/steamapps/common/Factorio"
+
 package main
 
 import (
@@ -35,29 +37,7 @@ type Ingredient struct {
 	Recipe   *Recipe
 }
 
-var factories = make(map[string]*Factory)
 var recipes = make(map[string]*Recipe)
-
-func loadFactories() error {
-	type jsonStation struct {
-		Speed float64
-	}
-
-	var fs map[string]jsonStation
-
-	data, err := ioutil.ReadFile("factories.json")
-	if err != nil {
-		return errors.Wrap(err, "failed to read factories.json")
-	}
-	err = json.Unmarshal(data, &fs)
-	if err != nil {
-		return errors.Wrap(err, "failed to read json data from factories.json")
-	}
-	for id, s := range fs {
-		factories[id] = &Factory{id, s.Speed}
-	}
-	return nil
-}
 
 func loadRecipes() error {
 	type jsonRecipe struct {
@@ -180,9 +160,6 @@ func main() {
 
 	flag.Parse()
 
-	if err = loadFactories(); err != nil {
-		panic(err)
-	}
 	if err = loadRecipes(); err != nil {
 		panic(err)
 	}
