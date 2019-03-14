@@ -29,6 +29,7 @@ import (
 	"math"
 	"os"
 	"sort"
+	"strconv"
 	"strings"
 	"text/tabwriter"
 
@@ -99,14 +100,14 @@ func init() {
 
 type Production struct {
 	p   *Product
-	ips float64
+	ipm float64
 	f   *Factory
 	fc  float64
 }
 
 type ProdList map[string]*Production
 
-func (pl ProdList) add(p *Product, ips float64) {
+func (pl ProdList) add(p *Product, ipm float64) {
 	if p.Recipe == nil {
 		return
 	}
@@ -115,27 +116,46 @@ func (pl ProdList) add(p *Product, ips float64) {
 		pn = &Production{p: p}
 		pl[p.Name] = pn
 	}
-	pn.ips += ips
+	pn.ipm += ipm
 
 	for _, i := range p.Recipe.Ingredients {
 		if ip := products[i.Name]; ip != nil {
-			pl.add(ip, ips*i.Amount/p.Amount)
+			pl.add(ip, ipm*i.Amount/p.Amount)
 		}
 	}
 }
 
-func NewProduction(name string, ips float64) (ProdList, error) {
+func NewProduction(items []Item) (ProdList, error) {
 	pl := make(ProdList)
 
-	p := products[name]
-	if p == nil {
-		return nil, errors.Errorf("unknown item %s", name)
-	}
-	if p.Recipe == nil {
-		return nil, errors.Errorf("no known recipe for item %s", name)
-	}
+	for _, i := range items {
+		p := products[i.Name]
+		if p == nil {
+			return nil, errors.Errorf("unknown item %s", i.Name)
+		}
+		if p.Recipe == nil {
+			return nil, errors.Errorf("no known recipe for item %s", i.Name)
+		}
 
-	pl.add(p, ips)
+		if i.Amount == 0 {
+			// calculate amount such that we can keep the fastest factory for that item 100% busy.
+			if p.Recipe == nil {
+				return nil, errors.Errorf("no recipe found for item %s", i.Name)
+			}
+			fs := categories[p.Recipe.Category]
+			if fs == nil {
+				return nil, errors.Errorf("no factory found for item %s", i.Name)
+			}
+			speed := 0.0
+			for _, f := range fs {
+				if f.Speed > speed {
+					speed = f.Speed
+				}
+			}
+			i.Amount = 60 / p.Recipe.Time * speed
+		}
+		pl.add(p, i.Amount)
+	}
 
 	// update production list with appropriate factories
 	for _, p := range pl {
@@ -146,8 +166,9 @@ func NewProduction(name string, ips float64) (ProdList, error) {
 		}
 		for _, f := range fs {
 			// pick the slowest compatible factory as long as the number of factories does not change in order to save energy
-			c := math.Ceil(p.ips * r.Time / f.Speed / p.p.Amount)
-			if p.f == nil || c < p.fc || (c == p.fc && f.Speed < p.f.Speed) {
+			// divide by 60 since times are given in seconds per item
+			c := p.ipm * r.Time / f.Speed / p.p.Amount / 60.0
+			if p.f == nil || c < p.fc || (math.Ceil(c) == math.Ceil(p.fc) && f.Speed < p.f.Speed) {
 				p.f = f
 				p.fc = c
 			}
@@ -157,15 +178,26 @@ func NewProduction(name string, ips float64) (ProdList, error) {
 	return pl, nil
 }
 
+func usage() {
+	fmt.Fprintf(flag.CommandLine.Output(), "Usage: %s [-list] item-name[:rate] [item-name[:rate] ...]\n", os.Args[0])
+	fmt.Fprintf(flag.CommandLine.Output(), `
+Rates are specified in items per minute. If the rate for a given item is 0 or
+omitted, it is automatically set to the fastest possible rate to keep one
+factory (the fastest one for this item) 100%% busy.
+
+Flags:
+`)
+	flag.PrintDefaults()
+}
+
 func main() {
 	var (
 		err error
 
 		list = flag.Bool("list", false, "lists known items")
-		name = flag.String("i", "", "item `name`")
-		ips  = flag.Float64("r", 1.0, "production rate in `items per second`")
 	)
 
+	flag.CommandLine.Usage = usage
 	flag.Parse()
 
 	if *list {
@@ -181,13 +213,29 @@ func main() {
 		os.Exit(0)
 	}
 
-	if *ips <= 0.0 {
-		fmt.Fprintf(os.Stderr, "error: items per second must be a non-zero positive number")
+	if flag.NArg() == 0 {
+		usage()
+		os.Exit(0)
 	}
 
-	*name = strings.Replace(strings.ToLower(*name), " ", "_", -1)
+	items := make([]Item, flag.NArg())
+	for i, a := range flag.Args() {
+		item := &items[i]
+		col := strings.IndexByte(a, ':')
+		if col >= 0 {
+			item.Name = a[:col]
+			item.Amount, err = strconv.ParseFloat(a[col+1:], 64)
+			if err != nil {
+				fmt.Fprintf(os.Stderr, errors.Wrapf(err, "failed to parse rate for item %s", item.Name).Error())
+				os.Exit(0)
+			}
+		} else {
+			item.Name = a
+			item.Amount = 0
+		}
+	}
 
-	pl, err := NewProduction(*name, *ips)
+	pl, err := NewProduction(items)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "error: %v\n", err)
 		os.Exit(1)
@@ -202,11 +250,11 @@ func main() {
 	})
 
 	w := tabwriter.NewWriter(os.Stdout, 0, 0, 1, ' ', 0)
-	fmt.Fprintf(w, "#\tFactory\tItem\titems/s\titems/m\n")
+	fmt.Fprintf(w, "#\tFactory\tItem\titems/m\titems/s\n")
 	fmt.Fprintf(w, "--\t---------------------\t-----------------------\t-------\t-------\n")
 
 	for _, p := range spl {
-		fmt.Fprintf(w, "%.0f\t%s\t%s\t%.2f\t%.0f\n", p.fc, p.f.ID, p.p.Name, p.ips, p.ips*60.0)
+		fmt.Fprintf(w, "%.0f\t%s\t%s\t%.1f\t%.2f\n", math.Ceil(p.fc), p.f.ID, p.p.Name, p.ipm, p.ipm/60.0)
 	}
 	w.Flush()
 }
