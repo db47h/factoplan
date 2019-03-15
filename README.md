@@ -67,7 +67,7 @@ This will produce:
 1  oil-refinery          petroleum-gas            410.0   6.83
 ```
 
-The first column is the needed number of factories needed to produce the item mentioned in the third column at the given rate. Note that the rates in the right hand-side columns are the item rates required to achieve the set goals; they do not necessarily match the given number of factories (which are rounded up). To illustrate this, consider our example where in order to produce the requested rates of solar panels, accumulators and amo, we need to produce 4.07 iron ore per second. However, the 9 mining drills announced are capable of producing 4.5 items per second. This is not a bug, just a missing feature where the displayed items rates should be what will be produced for real.
+The first column is the number of factories needed to produce the listed item at the given rate. Note that the item rates are the those required to achieve the set goals; they do not necessarily match the given number of factories (which are rounded up). To illustrate this, consider our example where in order to produce the requested rates of solar panels, accumulators and amo, we need to produce 4.07 iron ore per second. However, the 9 mining drills announced are capable of producing 4.5 items per second. This is not a bug, just a missing feature where the displayed items rates should be what will be really produced.
 
 The item rates can still give a good estimate of the required belt speeds.
 
