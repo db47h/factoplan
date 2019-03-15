@@ -8,7 +8,7 @@ Given a list of "wanted" items and the rates at which one wants to get them, it 
 
 Prerequisites: [LUA] and [Go].
 
-The list of production recipes and items is not provided with factoplan. This is mostly because I do not want to have to keep this repo in sync with latest Factorio experimental versions. However, the provided LUA importer script will extract the necessary data from your Factorio game files. Once done, you'll just need to recompile factoplan.
+The list of production recipes and items is not provided with Factoplan. This is mostly because I do not want to have to keep this repo in sync with the latest Factorio experimental versions. However, the provided LUA importer script will extract the necessary data from your Factorio game files. Once done, you'll just need to recompile Factoplan.
 
 In short:
 
@@ -21,10 +21,12 @@ cd $GOPATH/src/github.com/db47h/factoplan
 # replace the second arg with the actual path to your Factorio installation
 lua ./importer.lua "$HOME/.local/share/Steam/steamapps/common/Factorio"
 
+# recompile and install. This writes a single file (the factoplan executable) to
+# $GOBIN if defined, else $GOPATH/bin or $HOME/go/bin as a last resort
 go install
 ```
 
-And you're all set. Note that you might need to do this every time you update Factorio.
+And you're all set. Note that you will need to repeat the import and install steps every time you update Factorio.
 
 ## Usage
 
@@ -140,6 +142,7 @@ The "space-science-pack" is also a pseudo-item added as a by-product of producin
 
 ## TODO
 
+- Show production needs for resources without a recipe (like water and oil)
 - A graphwiz export with item rates would be nice.
 
 [Factorio]: https://www.factorio.com/
