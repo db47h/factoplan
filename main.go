@@ -152,7 +152,7 @@ func NewProduction(items []Item) (ProdList, error) {
 					speed = f.Speed
 				}
 			}
-			i.Amount = 60 / p.Recipe.Time * speed
+			i.Amount = 60.0 * speed / p.Recipe.Time * p.Amount
 		}
 		pl.add(p, i.Amount)
 	}
